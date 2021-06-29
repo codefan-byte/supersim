@@ -114,6 +114,94 @@ if(NOT EXISTS ${LIBSETTINGS_INC})
   message(FATAL_ERROR "libsettings include dir doesn't exist")
 endif()
 
+# absl
+find_package(absl REQUIRED)
+get_target_property(
+  ABSL_BASE_INC
+  absl::base
+  INTERFACE_INCLUDE_DIRECTORIES
+  )
+list(APPEND ABSL_LIBS
+  absl::bad_any_cast_impl
+  absl::bad_optional_access
+  absl::bad_variant_access
+  absl::base
+  absl::city
+  absl::civil_time
+  absl::cord
+  absl::debugging_internal
+  absl::demangle_internal
+  absl::examine_stack
+  absl::exponential_biased
+  absl::failure_signal_handler
+  absl::flags_commandlineflag_internal
+  absl::flags_commandlineflag
+  absl::flags_config
+  absl::flags_internal
+  absl::flags_marshalling
+  absl::flags_parse
+  absl::flags_private_handle_accessor
+  absl::flags_program_name
+  absl::flags_reflection
+  absl::flags
+  absl::flags_usage_internal
+  absl::flags_usage
+  absl::graphcycles_internal
+  absl::hash
+  absl::hashtablez_sampler
+  absl::int128
+  absl::leak_check_disable
+  absl::leak_check
+  absl::log_severity
+  absl::malloc_internal
+  absl::periodic_sampler
+  absl::random_distributions
+  absl::random_internal_distribution_test_util
+  absl::random_internal_platform
+  absl::random_internal_pool_urbg
+  absl::random_internal_randen_hwaes_impl
+  absl::random_internal_randen_hwaes
+  absl::random_internal_randen_slow
+  absl::random_internal_randen
+  absl::random_internal_seed_material
+  absl::random_seed_gen_exception
+  absl::random_seed_sequences
+  absl::raw_hash_set
+  absl::raw_logging_internal
+  absl::scoped_set_env
+  absl::spinlock_wait
+  absl::stacktrace
+  absl::statusor
+  absl::status
+  absl::strerror
+  absl::str_format_internal
+  absl::strings_internal
+  absl::strings
+  absl::symbolize
+  absl::synchronization
+  absl::throw_delegate
+  absl::time
+  absl::time_zone
+  )  
+
+# protobuf
+find_package(Protobuf REQUIRED)
+get_target_property(
+  PROTOBUF_INC
+  protobuf::libprotobuf
+  INTERFACE_INCLUDE_DIRECTORIES
+  )
+
+# paragraph
+find_library(PARAGRAPH_A NAMES libparagraph.a PATHS ${CMAKE_INSTALL_RPATH})
+if(PARAGRAPH_A MATCHES "NOTFOUND")
+  message(FATAL_ERROR "libparagraph.a not found")
+endif()
+string(REPLACE lib/libparagraph.a include/ PARAGRAPH_INC ${PARAGRAPH_A})
+if(NOT EXISTS ${PARAGRAPH_INC})
+  message(FATAL_ERROR "paragraph include dir doesn't exist")
+endif()
+
 add_executable(
   supersim
   ${PROJECT_SOURCE_DIR}/src/main.cc
@@ -134,6 +222,8 @@ add_executable(
   ${PROJECT_SOURCE_DIR}/src/workload/alltoall/Application.cc
   ${PROJECT_SOURCE_DIR}/src/workload/stencil/StencilTerminal.cc
   ${PROJECT_SOURCE_DIR}/src/workload/stencil/Application.cc
+  ${PROJECT_SOURCE_DIR}/src/workload/paragraph/Application.cc
+  ${PROJECT_SOURCE_DIR}/src/workload/paragraph/GraphTerminal.cc
   ${PROJECT_SOURCE_DIR}/src/workload/stream/StreamTerminal.cc
   ${PROJECT_SOURCE_DIR}/src/workload/stream/Application.cc
   ${PROJECT_SOURCE_DIR}/src/workload/pulse/Application.cc
@@ -326,6 +416,8 @@ add_executable(
   ${PROJECT_SOURCE_DIR}/src/workload/alltoall/AllToAllTerminal.h
   ${PROJECT_SOURCE_DIR}/src/workload/stencil/Application.h
   ${PROJECT_SOURCE_DIR}/src/workload/stencil/StencilTerminal.h
+  ${PROJECT_SOURCE_DIR}/src/workload/paragraph/Application.h
+  ${PROJECT_SOURCE_DIR}/src/workload/paragraph/GraphTerminal.h
   ${PROJECT_SOURCE_DIR}/src/workload/stream/Application.h
   ${PROJECT_SOURCE_DIR}/src/workload/stream/StreamTerminal.h
   ${PROJECT_SOURCE_DIR}/src/workload/pulse/Application.h
@@ -511,6 +603,9 @@ target_include_directories(
   ${PROJECT_SOURCE_DIR}/src
   ${ZLIB_INC}
   ${NLOHMANN_JSON_INC}
+  ${PARAGRAPH_INC}
+  ${PROTOBUF_INC}
+  ${COM_GOOGLE_ABSL_INC}
   ${LIBPRIM_INC}
   ${LIBCOLHASH_INC}
   ${LIBFACTORY_INC}
@@ -524,6 +619,9 @@ target_include_directories(
 
 target_link_libraries(
   supersim
+  protobuf::libprotobuf
+  "${ABSL_LIBS}"
+  ${PARAGRAPH_A}
   ${ZLIB_A}
   ${LIBPRIM_A}
   ${LIBCOLHASH_A}
@@ -543,6 +641,9 @@ target_link_libraries(
   ${LIBCOLHASH_A}
   ${LIBPRIM_A}
   ${ZLIB_A}
+  ${PARAGRAPH_A}
+  "${ABSL_LIBS}"
+  protobuf::libprotobuf
   )
 
 include(GNUInstallDirs)
