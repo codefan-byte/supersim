@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.20)
 project(supersim)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -7,112 +7,100 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 include(FindPkgConfig)
 
 # zlib
-find_library(ZLIB_A NAMES libz.a PATHS ${CMAKE_INSTALL_RPATH})
-if(ZLIB_A MATCHES "NOTFOUND")
-  message(FATAL_ERROR "libz.a not found")
-endif()
-string(REPLACE lib/libz.a include/ ZLIB_INC ${ZLIB_A})
-if(NOT EXISTS ${ZLIB_INC})
-  message(FATAL_ERROR "zlib include dir doesn't exist")
-endif()
-
-# nlohmann_json
-find_package(nlohmann_json REQUIRED)
-get_target_property(
-  NLOHMANN_JSON_INC
-  nlohmann_json::nlohmann_json
+pkg_check_modules(zlib REQUIRED IMPORTED_TARGET zlib)
+  get_target_property(
+  ZLIB_INC
+  PkgConfig::zlib
   INTERFACE_INCLUDE_DIRECTORIES
 )
 
+# nlohmann_json
+pkg_check_modules(nlohmann_json REQUIRED IMPORTED_TARGET nlohmann_json)
+  get_target_property(
+  NLOHMANN_JSON_INC
+  PkgConfig::nlohmann_json
+  INTERFACE_INCLUDE_DIRECTORIES
+)
+
+# protobuf
+pkg_check_modules(protobuf REQUIRED IMPORTED_TARGET protobuf)
+  get_target_property(
+  PROTOBUF_INC
+  PkgConfig::protobuf
+  INTERFACE_INCLUDE_DIRECTORIES
+  )
+
 # libprim
-find_library(LIBPRIM_A NAMES libprim.a PATHS ${CMAKE_INSTALL_RPATH})
-if(LIBPRIM_A MATCHES "NOTFOUND")
-  message(FATAL_ERROR "libprim.a not found")
-endif()
-string(REPLACE lib/libprim.a include/ LIBPRIM_INC ${LIBPRIM_A})
-if(NOT EXISTS ${LIBPRIM_INC})
-  message(FATAL_ERROR "libprim include dir doesn't exist")
-endif()
+pkg_check_modules(libprim REQUIRED IMPORTED_TARGET libprim)
+  get_target_property(
+  LIBPRIM_INC
+  PkgConfig::libprim
+  INTERFACE_INCLUDE_DIRECTORIES
+  )
 
 # libcolhash
-find_library(LIBCOLHASH_A NAMES libcolhash.a PATHS ${CMAKE_INSTALL_RPATH})
-if(LIBCOLHASH_A MATCHES "NOTFOUND")
-  message(FATAL_ERROR "libcolhash.a not found")
-endif()
-string(REPLACE lib/libcolhash.a include/ LIBCOLHASH_INC ${LIBCOLHASH_A})
-if(NOT EXISTS ${LIBCOLHASH_INC})
-  message(FATAL_ERROR "libcolhash include dir doesn't exist")
-endif()
+pkg_check_modules(libcolhash REQUIRED IMPORTED_TARGET libcolhash)
+  get_target_property(
+  LIBCOLHASH_INC
+  PkgConfig::libcolhash
+  INTERFACE_INCLUDE_DIRECTORIES
+  )
 
 # libfactory
-find_library(LIBFACTORY_A NAMES libfactory.a PATHS ${CMAKE_INSTALL_RPATH})
-if(LIBFACTORY_A MATCHES "NOTFOUND")
-  message(FATAL_ERROR "libfactory.a not found")
-endif()
-string(REPLACE lib/libfactory.a include/ LIBFACTORY_INC ${LIBFACTORY_A})
-if(NOT EXISTS ${LIBFACTORY_INC})
-  message(FATAL_ERROR "libfactory include dir doesn't exist")
-endif()
+pkg_check_modules(libfactory REQUIRED IMPORTED_TARGET libfactory)
+  get_target_property(
+  LIBFACTORY_INC
+  PkgConfig::libfactory
+  INTERFACE_INCLUDE_DIRECTORIES
+  )
 
 # librnd
-find_library(LIBRND_A NAMES librnd.a PATHS ${CMAKE_INSTALL_RPATH})
-if(LIBRND_A MATCHES "NOTFOUND")
-  message(FATAL_ERROR "librnd.a not found")
-endif()
-string(REPLACE lib/librnd.a include/ LIBRND_INC ${LIBRND_A})
-if(NOT EXISTS ${LIBRND_INC})
-  message(FATAL_ERROR "librnd include dir doesn't exist")
-endif()
+pkg_check_modules(librnd REQUIRED IMPORTED_TARGET librnd)
+  get_target_property(
+  LIBRND_INC
+  PkgConfig::librnd
+  INTERFACE_INCLUDE_DIRECTORIES
+  )
 
 # libmut
-find_library(LIBMUT_A NAMES libmut.a PATHS ${CMAKE_INSTALL_RPATH})
-if(LIBMUT_A MATCHES "NOTFOUND")
-  message(FATAL_ERROR "libmut.a not found")
-endif()
-string(REPLACE lib/libmut.a include/ LIBMUT_INC ${LIBMUT_A})
-if(NOT EXISTS ${LIBMUT_INC})
-  message(FATAL_ERROR "libmut include dir doesn't exist")
-endif()
+pkg_check_modules(libmut REQUIRED IMPORTED_TARGET libmut)
+  get_target_property(
+  LIBMUT_INC
+  PkgConfig::libmut
+  INTERFACE_INCLUDE_DIRECTORIES
+  )
 
 # libbits
-find_library(LIBBITS_A NAMES libbits.a PATHS ${CMAKE_INSTALL_RPATH})
-if(LIBBITS_A MATCHES "NOTFOUND")
-  message(FATAL_ERROR "libbits.a not found")
-endif()
-string(REPLACE lib/libbits.a include/ LIBBITS_INC ${LIBBITS_A})
-if(NOT EXISTS ${LIBBITS_INC})
-  message(FATAL_ERROR "libbits include dir doesn't exist")
-endif()
+pkg_check_modules(libbits REQUIRED IMPORTED_TARGET libbits)
+  get_target_property(
+  LIBBITS_INC
+  PkgConfig::libbits
+  INTERFACE_INCLUDE_DIRECTORIES
+  )
 
 # libstrop
-find_library(LIBSTROP_A NAMES libstrop.a PATHS ${CMAKE_INSTALL_RPATH})
-if(LIBSTROP_A MATCHES "NOTFOUND")
-  message(FATAL_ERROR "libstrop.a not found")
-endif()
-string(REPLACE lib/libstrop.a include/ LIBSTROP_INC ${LIBSTROP_A})
-if(NOT EXISTS ${LIBSTROP_INC})
-  message(FATAL_ERROR "libstrop include dir doesn't exist")
-endif()
+pkg_check_modules(libstrop REQUIRED IMPORTED_TARGET libstrop)
+  get_target_property(
+  LIBSTROP_INC
+  PkgConfig::libstrop
+  INTERFACE_INCLUDE_DIRECTORIES
+  )
 
 # libfio
-find_library(LIBFIO_A NAMES libfio.a PATHS ${CMAKE_INSTALL_RPATH})
-if(LIBFIO_A MATCHES "NOTFOUND")
-  message(FATAL_ERROR "libfio.a not found")
-endif()
-string(REPLACE lib/libfio.a include/ LIBFIO_INC ${LIBFIO_A})
-if(NOT EXISTS ${LIBFIO_INC})
-  message(FATAL_ERROR "libfio include dir doesn't exist")
-endif()
+pkg_check_modules(libfio REQUIRED IMPORTED_TARGET libfio)
+  get_target_property(
+  LIBFIO_INC
+  PkgConfig::libfio
+  INTERFACE_INCLUDE_DIRECTORIES
+  )
 
 # libsettings
-find_library(LIBSETTINGS_A NAMES libsettings.a PATHS ${CMAKE_INSTALL_RPATH})
-if(LIBSETTINGS_A MATCHES "NOTFOUND")
-  message(FATAL_ERROR "libsettings.a not found")
-endif()
-string(REPLACE lib/libsettings.a include/ LIBSETTINGS_INC ${LIBSETTINGS_A})
-if(NOT EXISTS ${LIBSETTINGS_INC})
-  message(FATAL_ERROR "libsettings include dir doesn't exist")
-endif()
+pkg_check_modules(libsettings REQUIRED IMPORTED_TARGET libsettings)
+  get_target_property(
+  LIBSETTINGS_INC
+  PkgConfig::libsettings
+  INTERFACE_INCLUDE_DIRECTORIES
+  )
 
 # absl
 find_package(absl REQUIRED)
@@ -182,7 +170,7 @@ list(APPEND ABSL_LIBS
   absl::throw_delegate
   absl::time
   absl::time_zone
-  )  
+  )
 
 # protobuf
 find_package(Protobuf REQUIRED)
@@ -193,14 +181,12 @@ get_target_property(
   )
 
 # paragraph
-find_library(PARAGRAPH_A NAMES libparagraph.a PATHS ${CMAKE_INSTALL_RPATH})
-if(PARAGRAPH_A MATCHES "NOTFOUND")
-  message(FATAL_ERROR "libparagraph.a not found")
-endif()
-string(REPLACE lib/libparagraph.a include/ PARAGRAPH_INC ${PARAGRAPH_A})
-if(NOT EXISTS ${PARAGRAPH_INC})
-  message(FATAL_ERROR "paragraph include dir doesn't exist")
-endif()
+pkg_check_modules(paragraph REQUIRED IMPORTED_TARGET libparagraph)
+  get_target_property(
+  PARAGRAPH_INC
+  PkgConfig::paragraph
+  INTERFACE_INCLUDE_DIRECTORIES
+  )
 
 add_executable(
   supersim
@@ -619,31 +605,22 @@ target_include_directories(
 
 target_link_libraries(
   supersim
-  protobuf::libprotobuf
+  PkgConfig::zlib
+  PkgConfig::nlohmann_json
+  PkgConfig::paragraph
+  PkgConfig::protobuf
+  PkgConfig::libprim
+  PkgConfig::libcolhash
+  PkgConfig::libfactory
+  PkgConfig::librnd
+  PkgConfig::libmut
+  PkgConfig::libbits
+  PkgConfig::libstrop
+  PkgConfig::libfio
+  PkgConfig::libsettings
   "${ABSL_LIBS}"
-  ${PARAGRAPH_A}
-  ${ZLIB_A}
-  ${LIBPRIM_A}
-  ${LIBCOLHASH_A}
-  ${LIBFACTORY_A}
-  ${LIBRND_A}
-  ${LIBMUT_A}
-  ${LIBBITS_A}
-  ${LIBSTROP_A}
-  ${LIBFIO_A}
-  ${LIBSETTINGS_A}
-  ${LIBFIO_A}
-  ${LIBSTROP_A}
-  ${LIBBITS_A}
-  ${LIBMUT_A}
-  ${LIBRND_A}
-  ${LIBFACTORY_A}
-  ${LIBCOLHASH_A}
-  ${LIBPRIM_A}
-  ${ZLIB_A}
-  ${PARAGRAPH_A}
-  "${ABSL_LIBS}"
-  protobuf::libprotobuf
+  PkgConfig::protobuf
+  PkgConfig::paragraph
   )
 
 include(GNUInstallDirs)
@@ -652,4 +629,3 @@ install(
   TARGETS
   supersim
   )
-

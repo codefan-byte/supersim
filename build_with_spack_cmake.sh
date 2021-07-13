@@ -2,33 +2,133 @@
 
 set -e
 
-BASE=$(realpath $(dirname "$0"))
-BUILD_DIR=${BASE}/cmake-build
-INSTALL_DIR=${BASE}/cmake-local
+# Gets the directory location of this script
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-PROTOBUF_DIR=$(spack location -i protobuf)
-ABSEIL_CPP_DIR=$(spack location -i abseil-cpp~shared)
-LIBPRIM_DIR=$(spack location -i libprim)
-LIBCOLHASH_DIR=$(spack location -i libcolhash)
-LIBFACTORY_DIR=$(spack location -i libfactory)
-LIBRND_DIR=$(spack location -i librnd)
-LIBMUT_DIR=$(spack location -i libmut)
-LIBBITS_DIR=$(spack location -i libbits)
-LIBSTROP_DIR=$(spack location -i libstrop)
-LIBFIO_DIR=$(spack location -i libfio)
-LIBSETTINGS_DIR=$(spack location -i libsettings)
-NLOHMANN_JSON_DIR=$(spack location -i nlohmann-json)
-ZLIB_DIR=$(spack location -i zlib)
-PARAGRAPH_CORE_DIR=$(spack location -i paragraph-core)
+function prereqs() {
+    echo "Before running this script, you must follow the directions here:"
+    echo "https://github.com/nicspack/nicspack/"
+}
+
+# Tests for spack existence
+if ! which spack; then
+    prereqs
+    exit -1
+fi
+
+# Parses command line arguments
+SPACK_TARGET=$(spack spec zlib | grep arch | tr '-' ' ' | awk '{print $NF}')
+CLEAN=
+function help() {
+    echo "usage: $0 <options>"
+    echo "  -h,--help              - show this message and exit"
+    echo "  -t=,--target=<TARGET>  - set the spack target architecture"
+    echo "  -c,--clean             - clean before building"
+}
+for i in "$@"; do
+    case $i in
+	-h|--help)
+	    help
+	    exit 0
+	    ;;
+	-t=*|--target=*)
+	    SPACK_TARGET="${i#*=}"
+	    shift
+	    ;;
+	-c|--clean)
+	    CLEAN="YES"
+	    shift
+	    ;;
+	*)
+	    echo "unknown argument: $i"
+	    help
+	    exit -1
+    esac
+done
+echo "SPACK_TARGET=${SPACK_TARGET}"
+echo "CLEAN=${CLEAN}"
+
+# Ensure dependencies are installed
+BRANCH=cmake
+SUPERSIM_SPEC="supersim@${BRANCH} target=${SPACK_TARGET}"
+echo "SUPERSIM_SPEC=${SUPERSIM_SPEC}"
+# Ensures all dependencies are installed
+if ! spack install --only dependencies ${SUPERSIM_SPEC}; then
+    prereqs
+    exit -1
+fi
+
+# Saves the full spec to a tmp file for later parsing
+spack spec ${SUPERSIM_SPEC} > /tmp/supersim_spec_${BRANCH}
+
+# Extracts the exact spec of a dependency then returns the install directory
+function location() {
+    local spec=$(grep "\^${1}@" /tmp/supersim_spec_${BRANCH} | sed 's/\s.*^//g')
+    spack location -i ${spec}
+}
+
+function add_to_install_rpath() {
+    if [[ ";$INSTALL_RPATH;" != *";$1;"* ]]; then
+	INSTALL_RPATH="$1;${INSTALL_RPATH}"
+    fi
+}
+function add_to_prefix_path() {
+    if [[ ";$PREFIX_PATH;" != *";$1;"* ]]; then
+	PREFIX_PATH="$1;${PREFIX_PATH}"
+    fi
+}
+
+BUILD_DIR=${SCRIPT_DIR}/cmake-build
+INSTALL_DIR=${SCRIPT_DIR}/cmake-local
+
+INSTALL_RPATH="${INSTALL_DIR}/lib;${INSTALL_DIR}/lib64;"
+add_to_install_rpath $(location protobuf)/lib
+add_to_install_rpath $(location abseil-cpp)/lib
+add_to_install_rpath $(location libprim)/lib
+add_to_install_rpath $(location libcolhash)/lib
+add_to_install_rpath $(location libfactory)/lib
+add_to_install_rpath $(location librnd)/lib
+add_to_install_rpath $(location libmut)/lib
+add_to_install_rpath $(location libbits)/lib
+add_to_install_rpath $(location libstrop)/lib
+add_to_install_rpath $(location libfio)/lib
+add_to_install_rpath $(location libsettings)/lib
+add_to_install_rpath $(location nlohmann-json)/lib
+add_to_install_rpath $(location zlib)/lib
+add_to_install_rpath $(location paragraph-core)/lib
+echo "INSTALL_RPATH:"
+echo "$INSTALL_RPATH"
+echo ""
+
+PREFIX_PATH=""
+add_to_prefix_path $(location protobuf)
+add_to_prefix_path $(location abseil-cpp)
+add_to_prefix_path $(location libprim)
+add_to_prefix_path $(location libcolhash)
+add_to_prefix_path $(location libfactory)
+add_to_prefix_path $(location librnd)
+add_to_prefix_path $(location libmut)
+add_to_prefix_path $(location libbits)
+add_to_prefix_path $(location libstrop)
+add_to_prefix_path $(location libfio)
+add_to_prefix_path $(location libsettings)
+add_to_prefix_path $(location nlohmann-json)
+add_to_prefix_path $(location zlib)
+add_to_prefix_path $(location paragraph-core)
+echo "PREFIX_PATH:"
+echo "$PREFIX_PATH"
+echo ""
+
 CMAKE_DIR=$(spack location -i cmake)
-
-INSTALL_RPATH="${INSTALL_DIR}/lib;${INSTALL_DIR}/lib64;${ABSEIL_CPP_DIR}/lib;${LIBPRIM_DIR}/lib;${LIBCOLHASH_DIR}/lib;${LIBFACTORY_DIR}/lib;${LIBRND_DIR}/lib;${LIBMUT_DIR}/lib;${LIBBITS_DIR}/lib;${LIBSTROP_DIR}/lib;${LIBFIO_DIR}/lib;${LIBSETTINGS_DIR}/lib;${NLOHMANN_JSON_DIR}/lib;${PROTOBUF_DIR}/lib;${PARAGRAPH_CORE_DIR}/lib;${ZLIB_DIR}/lib"
-PREFIX_PATH="${ABSEIL_CPP_DIR};${LIBPRIM_DIR};${LIBCOLHASH_DIR};${LIBFACTORY_DIR};${LIBRND_DIR};${LIBMUT_DIR};${LIBBITS_DIR};${LIBSTROP_DIR};${LIBFIO_DIR};${LIBSETTINGS_DIR};${NLOHMANN_JSON_DIR};${PROTOBUF_DIR};${PARAGRAPH_CORE_DIR};${ZLIB_DIR}"
-
 CMAKE=${CMAKE_DIR}/bin/cmake
 
+if [[ ! -z "${CLEAN}" ]]; then
+    rm -rf ${BUILD_DIR} ${INSTALL_DIR}
+fi
+
 mkdir -p ${BUILD_DIR}
-cd ${BUILD_DIR} && ${CMAKE} \
+cd ${BUILD_DIR}
+${CMAKE} \
     -G 'Unix Makefiles' \
     -DCMAKE_INSTALL_PREFIX:STRING=${INSTALL_DIR} \
     -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo \
@@ -38,7 +138,8 @@ cd ${BUILD_DIR} && ${CMAKE} \
     -DCMAKE_INSTALL_RPATH:STRING=${INSTALL_RPATH} \
     -DCMAKE_PREFIX_PATH:STRING=${PREFIX_PATH} \
     ..
-cd ${BUILD_DIR} && make -j $(nproc) all && make install
+make -j $(nproc) all
+make install
 
 echo ""
 echo "Build successful :)"
